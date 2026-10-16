@@ -79,36 +79,69 @@ section.on{display:block}
 .btn.sm{padding:6px 12px;font-size:.78rem;border-radius:6px}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 
-/* ===== 福の神No.バッジ ===== */
+/* ===== 数字の色（1白 2赤 3オレンジ 4黄色 5緑 6青 7藍色 8紫 9ゴールド） ===== */
+.nc1{background:#fff;color:#a2919a;box-shadow:inset 0 0 0 2px #ecdbe4}
+.nc2{background:#ff6f7e;color:#fff}
+.nc3{background:#ffa25d;color:#fff}
+.nc4{background:#ffd84f;color:#7a5a00}
+.nc5{background:#7ed79a;color:#16663c}
+.nc6{background:#6fb8f0;color:#fff}
+.nc7{background:#6675cb;color:#fff}
+.nc8{background:#b489e2;color:#fff}
+.nc9{background:linear-gradient(135deg,#f6d379,#dfa62c);color:#6b4600}
+
+/* ===== 福の神ナンバーのバッジ ===== */
 .fuku-badge{display:inline-flex;gap:3px;vertical-align:middle}
-.fuku-badge span{width:26px;height:26px;border-radius:9px;color:#fff;
+.fuku-badge span{width:26px;height:26px;border-radius:9px;
   font-weight:800;font-size:1rem;display:flex;align-items:center;
   justify-content:center;font-family:ui-monospace,monospace}
-.fuku-badge span:nth-child(1){background:var(--n1)}
-.fuku-badge span:nth-child(2){background:var(--n2);color:#6b4a00}
-.fuku-badge span:nth-child(3){background:var(--n3)}
-.fuku-badge.big span{width:46px;height:46px;font-size:1.6rem;border-radius:10px}
+.fuku-badge.big span{width:46px;height:46px;font-size:1.6rem;border-radius:12px}
+/* 1つぶんの数字チップ */
+.numchip{display:inline-flex;width:34px;height:34px;border-radius:11px;
+  align-items:center;justify-content:center;font-weight:800;font-size:1.3rem;
+  font-family:ui-monospace,monospace;vertical-align:middle}
 
 /* ===== 裏数字・ご褒美数字 ===== */
 .ura-badge{display:inline-flex;gap:2px;vertical-align:middle}
-.ura-badge span{width:22px;height:22px;border-radius:50%;background:var(--ura);
-  color:#fff;font-weight:800;font-size:.8rem;display:flex;align-items:center;
+.ura-badge span{width:22px;height:22px;border-radius:50%;
+  font-weight:800;font-size:.8rem;display:flex;align-items:center;
   justify-content:center;font-family:ui-monospace,monospace}
-.ura-badge.big span{width:46px;height:46px;font-size:1.5rem}
-.go-badge{display:inline-flex;min-width:24px;height:22px;padding:0 6px;
-  border-radius:6px;background:var(--go);color:#fff;font-weight:800;
+.go-badge{display:inline-flex;width:22px;height:22px;
+  border-radius:7px;font-weight:800;
   font-size:.8rem;align-items:center;justify-content:center;
   vertical-align:middle;font-family:ui-monospace,monospace}
-.go-badge.big{min-width:50px;height:46px;font-size:1.5rem;border-radius:10px}
 .minilab{font-size:.64rem;color:var(--ink-soft);font-weight:700;
   margin-left:4px;vertical-align:middle}
 
-/* ===== 3つの数字を大きく並べる ===== */
-.hero{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 10px}
-.hero-item{flex:1 1 150px;text-align:center;background:#fff;
-  border:1px solid var(--line);border-radius:10px;padding:12px 8px}
-.hero-k{font-size:.72rem;font-weight:700;color:var(--ink-soft);margin-bottom:7px}
-.hero-v{font-size:.85rem;font-weight:800;color:var(--navy);margin-top:7px}
+/* ===== 診断の表示（福の神ナンバーを大きく） ===== */
+.hero{text-align:center;margin:16px 0 10px;background:#fff;
+  border:1.5px solid var(--line);border-radius:16px;padding:18px 12px}
+.hero .hero-k{font-size:.74rem;font-weight:800;color:var(--ink-soft);margin-bottom:9px}
+.hero .main{display:inline-flex;gap:7px}
+.hero .main span{width:62px;height:62px;border-radius:18px;
+  font-weight:800;font-size:2.2rem;display:flex;align-items:center;
+  justify-content:center;font-family:ui-monospace,monospace}
+.hero .subs{margin:16px auto 0;max-width:260px;text-align:left}
+.hero .srow{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1.5px dashed var(--line);padding:7px 2px;font-size:.88rem;
+  font-weight:700;color:var(--navy)}
+.hero .srow:last-child{border-bottom:none}
+/* 色の見本 */
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.legend .lg{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;
+  font-weight:700;color:var(--navy)}
+.legend .lg i{display:inline-flex;width:24px;height:24px;border-radius:8px;
+  align-items:center;justify-content:center;font-style:normal;font-weight:800;
+  font-size:.85rem;font-family:ui-monospace,monospace}
+@media (max-width:400px){ .hero .main span{width:54px;height:54px;font-size:1.9rem} }
+
+/* グループのチェック式えらび */
+.gchecks{display:flex;gap:6px;flex-wrap:wrap}
+.gcheck{display:inline-flex;align-items:center;gap:5px;background:#fff;
+  border:1.5px solid var(--line);border-radius:99px;padding:5px 13px 5px 9px;
+  font-size:.8rem;font-weight:700;color:var(--navy);cursor:pointer}
+.gcheck input{margin:0;accent-color:#ff9ebb;width:15px;height:15px}
+.gcheck:has(input:checked){background:#fff0f5;border-color:#ff9ebb}
 
 /* ===== 名簿（リスト表示） ===== */
 .plist{border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
@@ -318,8 +351,8 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
                placeholder="1990/06/24"></div>
     </div>
     <div class="row">
-      <div class="field"><label>グループ</label>
-        <select id="in-group"></select></div>
+      <div class="field" style="flex:1 1 100%"><label>グループ（いくつでもOK）</label>
+        <div id="in-groups" class="gchecks"></div></div>
       <div class="field"><label>メモ</label>
         <input id="in-memo" type="text" placeholder="例：2期生"></div>
     </div>
@@ -406,8 +439,8 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
       <div class="row">
         <div class="field"><label>お名前</label>
           <input id="q-name" type="text" placeholder="例：のりぴ"></div>
-        <div class="field"><label>グループ</label>
-          <select id="q-group"></select></div>
+        <div class="field" style="flex:1 1 100%"><label>グループ（いくつでもOK）</label>
+          <div id="q-groups" class="gchecks"></div></div>
       </div>
       <div class="field"><label>メモ</label>
         <input id="q-memo" type="text" placeholder="例：2期生"></div>
@@ -435,6 +468,19 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
       → 1980年5月14日の人は <b>911</b>
     </div>
     <div class="hint" style="margin-top:10px">※ 1つめ・2つめ・3つめは、どれも<b>1〜9</b>のどれかになります（0にはなりません）。</div>
+
+    <h3 style="margin-top:18px">🎨 数字の色</h3>
+    <div class="legend">
+      <span class="lg"><i class="nc1">1</i>白</span>
+      <span class="lg"><i class="nc2">2</i>赤</span>
+      <span class="lg"><i class="nc3">3</i>オレンジ</span>
+      <span class="lg"><i class="nc4">4</i>黄色</span>
+      <span class="lg"><i class="nc5">5</i>緑</span>
+      <span class="lg"><i class="nc6">6</i>青</span>
+      <span class="lg"><i class="nc7">7</i>藍色</span>
+      <span class="lg"><i class="nc8">8</i>紫</span>
+      <span class="lg"><i class="nc9">9</i>ゴールド</span>
+    </div>
 
     <h3 style="margin-top:18px">🟣 裏数字</h3>
     <div class="calc-note">
@@ -549,7 +595,7 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 
 <div id="toast"></div>
 </div><!-- /#app-content -->
-<script type="module" src="firebase-bebe.js?v=3"></script>
-<script src="app.js?v=3"></script>
+<script type="module" src="firebase-bebe.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

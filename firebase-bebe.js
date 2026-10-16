@@ -123,10 +123,11 @@ const BebeDB = {
     const uid = currentUser.uid;
     const batch = writeBatch(db);
     list.forEach(function (p) {
+      const gs = Array.isArray(p.groups) ? p.groups : (p.group ? [p.group] : []);
       batch.set(personDoc(uid, p.id), {
         name: String(p.name || ""),
         birth: String(p.birth || ""),
-        group: String(p.group || ""),
+        groups: gs.map(String).filter(function (g) { return g.trim(); }),
         memo: String(p.memo || ""),
         createdAt: p.createdAt || Date.now(),
         ownerEmail: currentUser.email || "",

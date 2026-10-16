@@ -128,19 +128,27 @@
     const f = calcFuku(b.y, b.m, b.d);
     return { b: b, f: f, ura: calcUra(b.m, b.d), go: calcGohobi(f) };
   }
+  // 数字ごとの色（1白 2赤 3オレンジ 4黄色 5緑 6青 7藍色 8紫 9ゴールド）
+  const NUM_NAME = { 1: "白", 2: "赤", 3: "オレンジ", 4: "黄色", 5: "緑",
+                     6: "青", 7: "藍色", 8: "紫", 9: "ゴールド" };
+  const NUM_BAR = { 1: "#efe0e8", 2: "#ff6f7e", 3: "#ffa25d", 4: "#ffd84f",
+                    5: "#7ed79a", 6: "#6fb8f0", 7: "#6675cb", 8: "#b489e2", 9: "#dfa62c" };
+  function numCell(n) { return '<span class="nc' + n + '">' + n + "</span>"; }
+  function numChip(n) { return '<span class="numchip nc' + n + '">' + n + "</span>"; }
+
   function uraBadge(u) {
     if (!u) return "";
     return '<span class="ura-badge" title="裏数字（潜在・顕在）">' +
-      "<span>" + u.sen + "</span><span>" + u.ken + "</span></span>";
+      numCell(u.sen) + numCell(u.ken) + "</span>";
   }
   function goBadge(g) {
     if (!g) return "";
-    return '<span class="go-badge" title="ご褒美数字">' + g.single + "</span>";
+    return '<span class="go-badge nc' + g.single + '" title="ご褒美数字">' + g.single + "</span>";
   }
   function badge(f, big) {
     if (!f) return '<span class="hint">—</span>';
     return '<span class="fuku-badge' + (big ? " big" : "") + '">' +
-      "<span>" + f.n1 + "</span><span>" + f.n2 + "</span><span>" + f.n3 + "</span></span>";
+      numCell(f.n1) + numCell(f.n2) + numCell(f.n3) + "</span>";
   }
 
   // ------------------------------------------------------------------
@@ -205,6 +213,39 @@
     renderScopeNote();
   }
 
+  // その人が入っているグループの一覧（古い形＝group 1つ だけ のデータも読める）
+  function groupsOf(p) {
+    const src = Array.isArray(p.groups) ? p.groups : (p.group ? [p.group] : []);
+    const out = [];
+    src.forEach(function (g) {
+      g = String(g || "").trim();
+      if (g && out.indexOf(g) < 0) out.push(g);
+    });
+    return out;
+  }
+  // グループのえらび欄（チェック式）を作る
+  function groupChecksHtml(selected) {
+    const names = groupNames();
+    if (!names.length) {
+      return '<span class="hint">まだグループがありません。下の「👥 グループを作る」で作れます。</span>';
+    }
+    return names.map(function (g) {
+      return '<label class="gcheck"><input type="checkbox" value="' + esc(g) + '"' +
+        (selected.indexOf(g) >= 0 ? " checked" : "") + "><span>" + esc(g) + "</span></label>";
+    }).join("");
+  }
+  function readGroupChecks(containerId) {
+    const box = $(containerId);
+    if (!box) return [];
+    return Array.prototype.map.call(box.querySelectorAll("input:checked"),
+      function (c) { return c.value; });
+  }
+  function groupTagsHtml(p) {
+    return groupsOf(p).map(function (g) {
+      return '<span class="gtag">' + esc(g) + "</span>";
+    }).join("");
+  }
+
   // 作ったグループ ＋ すでに使われているグループ名
   function groupNames() {
     const out = [];
@@ -213,8 +254,9 @@
       if (g && out.indexOf(g) < 0) out.push(g);
     });
     people.forEach(function (p) {
-      const g = (p.group || "").trim();
-      if (g && out.indexOf(g) < 0) out.push(g);
+      groupsOf(p).forEach(function (g) {
+        if (out.indexOf(g) < 0) out.push(g);
+      });
     });
     return out;
   }
@@ -231,14 +273,17 @@
   }
 
   function deleteGroup(name) {
-    const used = people.filter(function (p) { return (p.group || "").trim() === name; });
+    const used = people.filter(function (p) { return groupsOf(p).indexOf(name) >= 0; });
     const msg = used.length
       ? "「" + name + "」を消します。\nこのグループの " + used.length +
         "人は「グループなし」になります。\n（登録そのものは消えません）"
       : "「" + name + "」を消します。よろしいですか？";
     if (!confirm(msg)) return;
     groupList = groupList.filter(function (g) { return g !== name; });
-    used.forEach(function (p) { p.group = ""; });
+    used.forEach(function (p) {
+      p.groups = groupsOf(p).filter(function (g) { return g !== name; });
+      delete p.group;
+    });
     save();
     refreshGroupPickers();
     renderMeibo();
@@ -251,7 +296,7 @@
     const names = groupNames();
     box.innerHTML = names.length
       ? names.map(function (g) {
-          const n = people.filter(function (p) { return (p.group || "").trim() === g; }).length;
+          const n = people.filter(function (p) { return groupsOf(p).indexOf(g) >= 0; }).length;
           return '<span class="gchip">' + esc(g) + "（" + n + "人）" +
             '<button data-gdel="' + esc(g) + '" title="けす">✕</button></span>';
         }).join("")
@@ -282,17 +327,11 @@
     fillGroupSelect($("n-group"), "（全員の中からさがす）");
     fillGroupSelect($("s-group"), "（全員）");
     fillGroupSelect($("g-target"), "（全員）");
-    const opts = '<option value="">（グループなし）</option>' +
-      groupNames().map(function (g) {
-        return '<option value="' + esc(g) + '">' + esc(g) + "</option>";
-      }).join("");
-    ["in-group", "q-group"].forEach(function (id) {
-      const sel = $(id);
-      if (!sel) return;
-      const cur = sel.value;
-      sel.innerHTML = opts;
-      sel.value = cur;
-      if (sel.value !== cur) sel.value = "";
+    ["in-groups", "q-groups"].forEach(function (id) {
+      const box = $(id);
+      if (!box) return;
+      const keep = readGroupChecks(id);   // いまチェックしているものは残す
+      box.innerHTML = groupChecksHtml(keep);
     });
     renderGroupChips();
     const psel = $("sel-person");
@@ -314,8 +353,8 @@
   // グループ条件でしぼる("__none__" はグループなしの人)
   function byGroup(list, g) {
     if (!g) return list.slice();
-    if (g === "__none__") return list.filter(function (p) { return !(p.group || "").trim(); });
-    return list.filter(function (p) { return (p.group || "").trim() === g; });
+    if (g === "__none__") return list.filter(function (p) { return groupsOf(p).length === 0; });
+    return list.filter(function (p) { return groupsOf(p).indexOf(g) >= 0; });
   }
 
   // ==================================================================
@@ -368,12 +407,12 @@
     const data = {
       name: name,
       birth: isoOf(b),
-      group: $("in-group").value.trim(),
+      groups: readGroupChecks("in-groups"),
       memo: $("in-memo").value.trim()
     };
     if (editingId) {
       const p = people.find(function (x) { return x.id === editingId; });
-      if (p) Object.assign(p, data);
+      if (p) { Object.assign(p, data); delete p.group; }
       editingId = null;
       $("btn-add").textContent = "この人を登録する";
       toast("書きかえました");
@@ -393,6 +432,9 @@
     $("in-birth").value = "";
     $("in-memo").value = "";
     $("preview").innerHTML = "";
+    const gb = $("in-groups");
+    if (gb) Array.prototype.forEach.call(gb.querySelectorAll("input"),
+      function (c) { c.checked = false; });
     editingId = null;
     $("btn-add").textContent = "この人を登録する";
   }
@@ -402,8 +444,9 @@
     editingId = id;
     $("in-name").value = p.name || "";
     $("in-birth").value = slashOf(p.birth);
-    $("in-group").value = p.group || "";
     $("in-memo").value = p.memo || "";
+    const gb = $("in-groups");
+    if (gb) gb.innerHTML = groupChecksHtml(groupsOf(p));
     $("btn-add").textContent = "この内容に書きかえる";
     formPreview();
     window.scrollTo(0, 0);
@@ -440,13 +483,13 @@
     if (fl.uk && (!dg || dg.ura.ken !== +fl.uk)) return false;
     if (fl.go && (!dg || dg.go.single !== +fl.go)) return false;
     if (fl.group) {
-      const g = (p.group || "").trim();
-      if (fl.group === "__none__") { if (g) return false; }
-      else if (g !== fl.group) return false;
+      const gs = groupsOf(p);
+      if (fl.group === "__none__") { if (gs.length) return false; }
+      else if (gs.indexOf(fl.group) < 0) return false;
     }
     if (fl.text) {
       const b = parseBirth(p.birth);
-      const hay = [p.name, p.memo, p.group, f ? f.label : "", p.birth,
+      const hay = [p.name, p.memo, groupsOf(p).join(" "), f ? f.label : "", p.birth,
         dg ? "裏" + dg.ura.label + " ご褒美" + dg.go.single : "",
         b ? b.y + "年" + b.m + "月" + b.d + "日" : ""].join(" ").toLowerCase();
       const words = fl.text.toLowerCase().split(/[\s　]+/).filter(Boolean);
@@ -460,10 +503,10 @@
     const f = dg ? dg.f : null;
     return '<div class="pcard">' +
       '<div class="nums">' + badge(f) + uraBadge(dg && dg.ura) + goBadge(dg && dg.go) + "</div>" +
-      '<div class="nm"><b>' + esc(p.name) + "</b>" +
-      ((p.group || "").trim() ? '<span class="gtag">' + esc(p.group) + "</span>" : "") +
+      '<div class="nm"><b>' + esc(p.name) + "</b>" + groupTagsHtml(p) +
       "<small>" + esc(slashOf(p.birth)) +
-      (dg ? " ／ 999の相手 " + partnerLabel(f) : "") +
+      (dg ? " ／ 潜在" + dg.ura.sen + " 顕在" + dg.ura.ken + " ご褒美" + dg.go.single +
+            " ／ 999の相手 " + partnerLabel(f) : "") +
       ((p.memo || "").trim() ? " ／ " + esc(p.memo) : "") +
       (readOnly() && p.ownerName ? " ／ 登録：" + esc(p.ownerName) : "") +
       "</small></div>" +
@@ -518,17 +561,17 @@
     const mdParts = String(b.m).split("").concat(String(b.d).split(""));
     return '<div class="calc-note">' +
       "<b>" + b.y + "年" + b.m + "月" + b.d + "日</b> の計算<br>" +
-      '<b style="color:var(--n1)">1つめ</b>（年）：' + sumSteps(b.y) + "<br>" +
-      '<b style="color:var(--n2)">2つめ</b>（月と日）：' +
+      "<b>1つめ</b>（年）：" + sumSteps(b.y) + "<br>" +
+      "<b>2つめ</b>（月と日）：" +
       sumStepsFrom(mdParts, digitSum(b.m) + digitSum(b.d)) + "<br>" +
-      '<b style="color:var(--n3)">3つめ</b>（1つめ＋2つめ）：' +
+      "<b>3つめ</b>（1つめ＋2つめ）：" +
       sumStepsFrom([f.n1, f.n2], f.n1 + f.n2) +
       '<div style="border-top:1px dashed var(--line);margin:8px 0 6px"></div>' +
-      '<b style="color:var(--ura)">裏数字</b><br>' +
+      "<b>裏数字</b><br>" +
       "　潜在数字（" + b.m + "月）：" + sumSteps(b.m) + "<br>" +
       "　顕在数字（" + b.d + "日）：" + sumSteps(b.d) +
       '<div style="border-top:1px dashed var(--line);margin:8px 0 6px"></div>' +
-      '<b style="color:var(--go)">ご褒美数字</b>：' + f.n1 + "＋" + f.n2 + "＋" + f.n3 +
+      "<b>ご褒美数字</b>：" + f.n1 + "＋" + f.n2 + "＋" + f.n3 +
       " ＝ " + g.raw +
       (g.raw >= 10 ? '<br>　<span class="hint">（1桁にすると ' +
         sumStepsFrom(String(g.raw).split(""), g.single) + "）</span>" : "") +
@@ -538,15 +581,13 @@
   // 3つの数字を大きく見せる共通パーツ
   function diagHeroHtml(dg) {
     return '<div class="hero">' +
-      '<div class="hero-item"><div class="hero-k">福の神ナンバー</div>' +
-      badge(dg.f, true) + '<div class="hero-v">' + dg.f.label + "</div></div>" +
-      '<div class="hero-item"><div class="hero-k">裏数字</div>' +
-      '<span class="ura-badge big"><span>' + dg.ura.sen + "</span><span>" + dg.ura.ken +
-      '</span></span><div class="hero-v">潜在 ' + dg.ura.sen + " ／ 顕在 " + dg.ura.ken + "</div></div>" +
-      '<div class="hero-item"><div class="hero-k">ご褒美数字</div>' +
-      '<span class="go-badge big">' + dg.go.single + "</span>" +
-      '<div class="hero-v">' + (dg.go.raw >= 10 ? "（" + dg.go.raw + " を1桁に）" : "&nbsp;") + "</div></div>" +
-      "</div>" +
+      '<div class="hero-k">福の神ナンバー</div>' +
+      '<div class="main">' + numCell(dg.f.n1) + numCell(dg.f.n2) + numCell(dg.f.n3) + "</div>" +
+      '<div class="subs">' +
+        '<div class="srow"><span>潜在数字</span>' + numChip(dg.ura.sen) + "</div>" +
+        '<div class="srow"><span>顕在数字</span>' + numChip(dg.ura.ken) + "</div>" +
+        '<div class="srow"><span>ご褒美数字</span>' + numChip(dg.go.single) + "</div>" +
+      "</div></div>" +
       '<div class="hint" style="text-align:center">999の相手は <b>' + partnerLabel(dg.f) + "</b></div>";
   }
 
@@ -581,7 +622,7 @@
     box.innerHTML = '<div style="text-align:center;margin:14px 0">' +
       '<div style="font-weight:800;font-size:1.05rem">' + esc(p.name) + "</div>" +
       '<div class="hint" style="margin-bottom:8px">' + esc(birthJa(p.birth)) +
-      ((p.group || "").trim() ? '<span class="gtag">' + esc(p.group) + "</span>" : "") + "</div>" +
+      groupTagsHtml(p) + "</div>" +
       "</div>" + diagHeroHtml(dg) + fukuExplainHtml(b, f, dg.ura, dg.go) +
       "<h3>🔗 めいぼの中の999の相手（" + mates.length + "人）</h3>" +
       (mates.length
@@ -599,7 +640,7 @@
       id: uid(),
       name: name,
       birth: isoOf(b),
-      group: $("q-group").value.trim(),
+      groups: readGroupChecks("q-groups"),
       memo: $("q-memo").value.trim(),
       createdAt: Date.now()
     });
@@ -713,16 +754,17 @@
       .sort(function (a, b) { return b.c - a.c || a.n - b.n; });
     return { rank: rank, total: total };
   }
-  function barsHtml(title, fn, list, color) {
+  function barsHtml(title, fn, list) {
     const st = statsBy(list, fn);
     if (!st.total) return "";
     const max = st.rank[0].c;
     const rows = st.rank.map(function (x) {
       const pct = Math.round(x.c / st.total * 100);
+      const col = NUM_BAR[x.n] || "#d9c7d2";
       return '<div class="bar-row' + (x.c === max ? " top" : "") + '">' +
-        '<div class="bn" style="background:' + color + '">' + x.n + "</div>" +
+        '<div class="bn nc' + x.n + '">' + x.n + "</div>" +
         '<div class="bt"><div class="bf" style="width:' + Math.max(pct, 3) +
-        "%;background:" + color + '"></div></div>' +
+        "%;background:" + col + '"></div></div>' +
         '<div class="bp">' + x.c + "人 " + pct + "%</div></div>";
     }).join("");
     return "<h3>" + title + "</h3>" + rows;
@@ -769,13 +811,13 @@
     if (topCount < 2) h += '<div class="hint" style="margin:-6px 0 14px">※ 同じ福の神ナンバーの人はいません。みんなちがう番号です。</div>';
 
     h += "<h3>🍀 福の神ナンバー</h3>";
-    h += barsHtml("　🔴 1つめの数字", function (d) { return d.f.n1; }, list, "#e9736b");
-    h += barsHtml("　🟡 2つめの数字", function (d) { return d.f.n2; }, list, "#f0b429");
-    h += barsHtml("　🔵 3つめの数字", function (d) { return d.f.n3; }, list, "#4a9fd8");
-    h += "<h3>🟣 裏数字</h3>";
-    h += barsHtml("　潜在数字（生まれた月）", function (d) { return d.ura.sen; }, list, "#8e6bbf");
-    h += barsHtml("　顕在数字（生まれた日）", function (d) { return d.ura.ken; }, list, "#a98ad0");
-    h += barsHtml("🟢 ご褒美数字", function (d) { return d.go.single; }, list, "#2e9e7a");
+    h += barsHtml("　1つめの数字", function (d) { return d.f.n1; }, list);
+    h += barsHtml("　2つめの数字", function (d) { return d.f.n2; }, list);
+    h += barsHtml("　3つめの数字", function (d) { return d.f.n3; }, list);
+    h += "<h3>裏数字</h3>";
+    h += barsHtml("　潜在数字（生まれた月）", function (d) { return d.ura.sen; }, list);
+    h += barsHtml("　顕在数字（生まれた日）", function (d) { return d.ura.ken; }, list);
+    h += barsHtml("ご褒美数字", function (d) { return d.go.single; }, list);
 
     h += "<h3>🍀 福の神ナンバーの多い順</h3>";
     h += '<table class="sheet"><tr><th>福の神ナンバー</th><th>人数</th><th>だれ</th></tr>';
@@ -806,7 +848,7 @@
         "</td><td><b>" + dg.f.label + "</b></td><td>" + dg.ura.sen + " ／ " + dg.ura.ken +
         "</td><td><b>" + dg.go.single + "</b>" +
         "</td><td>" + partnerLabel(dg.f) + "</td><td>" +
-        esc((p.group || "").trim() || "—") + "</td></tr>";
+        esc(groupsOf(p).join("、") || "—") + "</td></tr>";
     });
     h += "</table></div>";
 
@@ -938,18 +980,18 @@
 
   function renderManual(list) {
     let h = '<div class="card"><h2>✋ 手で入れかえる</h2>' +
-      '<div class="hint" style="margin-bottom:12px">グループ名を直すと、その場で保存されます。</div>';
+      '<div class="hint" style="margin-bottom:12px">チェックを付け外しすると、その場で保存されます。' +
+      "1人がいくつのグループに入ってもOKです。</div>";
     list.forEach(function (p) {
       const f = fukuOf(p);
-      h += '<div class="gmini" style="margin-bottom:8px">' + badge(f) +
+      h += '<div class="gmini" style="margin-bottom:10px;flex-wrap:wrap">' + badge(f) +
         "<b>" + esc(p.name) + "</b>" +
-        '<select data-gset="' + p.id + '" ' +
-        'style="flex:0 0 140px;padding:6px 8px;border:1.5px solid var(--line);border-radius:6px">' +
-        '<option value="">（なし）</option>' +
+        '<span class="gchecks" data-gset="' + p.id + '" style="flex:1 1 auto">' +
         groupNames().map(function (g) {
-          return '<option value="' + esc(g) + '"' +
-            ((p.group || "").trim() === g ? " selected" : "") + ">" + esc(g) + "</option>";
-        }).join("") + "</select></div>";
+          return '<label class="gcheck"><input type="checkbox" value="' + esc(g) + '"' +
+            (groupsOf(p).indexOf(g) >= 0 ? " checked" : "") + "><span>" + esc(g) +
+            "</span></label>";
+        }).join("") + "</span></div>";
     });
     h += "</div>";
     $("group-area").innerHTML = h;
@@ -965,7 +1007,7 @@
       if (groupList.indexOf(g.name) < 0) groupList.push(g.name);
       g.members.forEach(function (m) {
         const p = people.find(function (x) { return x.id === m.id; });
-        if (p) p.group = g.name;
+        if (p) { p.groups = [g.name]; delete p.group; }
       });
     });
     save();
@@ -1007,7 +1049,9 @@
       const fixed = add.map(function (p) {
         return {
           id: p.id || uid(), name: String(p.name), birth: p.birth,
-          group: p.group ? String(p.group) : "", memo: p.memo ? String(p.memo) : "",
+          groups: (Array.isArray(p.groups) ? p.groups : (p.group ? [p.group] : []))
+            .map(String).filter(function (g) { return g.trim(); }),
+          memo: p.memo ? String(p.memo) : "",
           createdAt: p.createdAt || Date.now()
         };
       });
@@ -1175,7 +1219,9 @@
       if (!t) return;
       const p = people.find(function (x) { return x.id === t.dataset.gset; });
       if (!p) return;
-      p.group = t.value.trim();
+      p.groups = Array.prototype.map.call(t.querySelectorAll("input:checked"),
+        function (c) { return c.value; });
+      delete p.group;
       save();
       refreshGroupPickers();
       renderMeibo();
