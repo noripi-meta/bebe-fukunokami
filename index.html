@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ベーベー福の神ワーク</title>
+<style>
+:root{
+  --navy:#1b2a4a; --navy-soft:#2c3f67; --gold:#c9a227; --gold-lt:#e8c75c;
+  --cream:#fdfaf3; --paper:#ffffff; --ink:#23262e; --ink-soft:#6b7280;
+  --red:#c0392b; --line:#e6dfcc; --shadow:0 2px 10px rgba(27,42,74,.08);
+  --n1:#e9736b; --n2:#f0b429; --n3:#4a9fd8;
+  --ura:#8e6bbf; --go:#2e9e7a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--cream);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:16px;line-height:1.7;padding-bottom:60px}
+h1,h2,h3{margin:0 0 .5em;line-height:1.4}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit}
+
+/* ===== ヘッダー ===== */
+header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-soft) 100%);
+  color:#fff;padding:18px 16px 14px;text-align:center;box-shadow:var(--shadow)}
+header .title{font-size:1.25rem;font-weight:700;letter-spacing:.04em}
+header .title .fuku{color:var(--gold-lt)}
+header .sub{font-size:.78rem;opacity:.85;margin-top:2px}
+
+/* ===== タブ ===== */
+nav{display:flex;overflow-x:auto;background:var(--paper);
+  border-bottom:2px solid var(--line);position:sticky;top:0;z-index:50;
+  scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;background:none;border:none;padding:12px 15px;
+  font-size:.85rem;font-weight:600;color:var(--ink-soft);
+  border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:var(--navy);border-bottom-color:var(--gold)}
+
+main{max-width:900px;margin:0 auto;padding:16px 14px 40px}
+section{display:none}
+section.on{display:block}
+
+/* ===== カード ===== */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card>h2{font-size:1.05rem;color:var(--navy);
+  border-bottom:2px solid var(--gold);padding-bottom:7px;margin-bottom:12px}
+.card>h3{font-size:.95rem;color:var(--navy);margin-top:16px}
+.hint{font-size:.8rem;color:var(--ink-soft);line-height:1.6}
+.hint.warn{color:var(--red)}
+
+/* ===== フォーム ===== */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.82rem;font-weight:700;
+  color:var(--navy);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;
+  border:1.5px solid var(--line);border-radius:8px;background:#fff}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--gold)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 140px;min-width:0}
+
+.btn{background:var(--navy);color:#fff;border:none;border-radius:8px;
+  padding:11px 20px;font-weight:700;font-size:.9rem}
+.btn:active{opacity:.75}
+.btn.gold{background:var(--gold);color:#2b2000}
+.btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
+.btn.danger{background:#fff;color:var(--red);border:1.5px solid var(--red)}
+.btn.sm{padding:6px 12px;font-size:.78rem;border-radius:6px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* ===== 福の神No.バッジ ===== */
+.fuku-badge{display:inline-flex;gap:3px;vertical-align:middle}
+.fuku-badge span{width:28px;height:28px;border-radius:7px;color:#fff;
+  font-weight:800;font-size:1rem;display:flex;align-items:center;
+  justify-content:center;font-family:ui-monospace,monospace}
+.fuku-badge span:nth-child(1){background:var(--n1)}
+.fuku-badge span:nth-child(2){background:var(--n2);color:#43330a}
+.fuku-badge span:nth-child(3){background:var(--n3)}
+.fuku-badge.big span{width:46px;height:46px;font-size:1.6rem;border-radius:10px}
+
+/* ===== 裏数字・ご褒美数字 ===== */
+.ura-badge{display:inline-flex;gap:2px;vertical-align:middle}
+.ura-badge span{width:22px;height:22px;border-radius:50%;background:var(--ura);
+  color:#fff;font-weight:800;font-size:.8rem;display:flex;align-items:center;
+  justify-content:center;font-family:ui-monospace,monospace}
+.ura-badge.big span{width:46px;height:46px;font-size:1.5rem}
+.go-badge{display:inline-flex;min-width:24px;height:22px;padding:0 6px;
+  border-radius:6px;background:var(--go);color:#fff;font-weight:800;
+  font-size:.8rem;align-items:center;justify-content:center;
+  vertical-align:middle;font-family:ui-monospace,monospace}
+.go-badge.big{min-width:50px;height:46px;font-size:1.5rem;border-radius:10px}
+.minilab{font-size:.64rem;color:var(--ink-soft);font-weight:700;
+  margin-left:4px;vertical-align:middle}
+
+/* ===== 3つの数字を大きく並べる ===== */
+.hero{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 10px}
+.hero-item{flex:1 1 150px;text-align:center;background:#fff;
+  border:1px solid var(--line);border-radius:10px;padding:12px 8px}
+.hero-k{font-size:.72rem;font-weight:700;color:var(--ink-soft);margin-bottom:7px}
+.hero-v{font-size:.85rem;font-weight:800;color:var(--navy);margin-top:7px}
+
+/* ===== 名簿リスト ===== */
+.plist{display:flex;flex-direction:column;gap:8px}
+.pcard{display:flex;align-items:center;gap:10px;background:#fff;
+  border:1px solid var(--line);border-left:5px solid var(--gold);
+  border-radius:9px;padding:10px 12px}
+.pcard .nm{flex:1;min-width:0}
+.pcard .nm b{display:block;font-size:.95rem;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.pcard .nm small{color:var(--ink-soft);font-size:.74rem;line-height:2}
+.pcard .acts{display:flex;gap:4px}
+.pcard .acts button{background:none;border:none;font-size:1rem;padding:4px 6px;
+  border-radius:5px;color:var(--ink-soft)}
+.gtag{display:inline-block;background:var(--navy);color:#fff;font-size:.68rem;
+  padding:1px 7px;border-radius:99px;margin-left:5px;vertical-align:1px}
+
+/* ===== 絞り込みパネル ===== */
+.filt{border:1.5px solid var(--gold);border-radius:10px;
+  background:#fffdf5;margin-bottom:14px;overflow:hidden}
+.filt>summary{padding:10px 14px;font-weight:700;font-size:.88rem;
+  color:var(--navy);cursor:pointer;list-style:none}
+.filt>summary::-webkit-details-marker{display:none}
+.filt>summary::before{content:"\25B6";font-size:.7rem;margin-right:7px;
+  display:inline-block;transition:transform .15s}
+.filt[open]>summary::before{transform:rotate(90deg)}
+.filt-body{padding:0 14px 14px}
+.digit-picks{display:flex;gap:8px;align-items:flex-end}
+.digit-picks>div{flex:1}
+.digit-picks small{display:block;font-size:.7rem;color:var(--ink-soft);
+  text-align:center;margin-bottom:3px}
+.digit-picks select{text-align:center;font-weight:700}
+
+/* ===== 999の関係 ===== */
+.pair{display:flex;align-items:center;gap:8px;background:#fff;
+  border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:8px}
+.pair .who{flex:1;min-width:0;font-size:.85rem}
+.pair .who b{display:block;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.pair .link{font-size:1.2rem;color:var(--gold);flex:0 0 auto}
+.pair.hit{border-color:var(--gold);background:#fffdf0;
+  box-shadow:0 0 0 2px rgba(201,162,39,.15)}
+
+.matrix-wrap{overflow:auto;-webkit-overflow-scrolling:touch;
+  border:1px solid var(--line);border-radius:9px}
+table.matrix{border-collapse:collapse;font-size:.72rem;background:#fff}
+table.matrix th,table.matrix td{border:1px solid var(--line);
+  padding:4px 6px;text-align:center;white-space:nowrap}
+table.matrix th{background:#f6f2e6;position:sticky;top:0;z-index:2}
+table.matrix th.rh{position:sticky;left:0;z-index:3;text-align:left;
+  max-width:110px;overflow:hidden;text-overflow:ellipsis}
+table.matrix td.yes{background:var(--gold);color:#2b2000;font-weight:800}
+table.matrix td.self{background:#eee;color:#bbb}
+
+/* ===== 分析シート ===== */
+.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat{flex:1 1 100px;background:#fff;border:1px solid var(--line);
+  border-radius:9px;padding:10px;text-align:center}
+.stat .v{font-size:1.5rem;font-weight:800;color:var(--navy);line-height:1.2}
+.stat .k{font-size:.72rem;color:var(--ink-soft)}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.bar-row .bn{width:26px;height:26px;border-radius:6px;color:#fff;
+  font-weight:800;font-size:.85rem;display:flex;align-items:center;
+  justify-content:center;flex:0 0 auto;font-family:ui-monospace,monospace}
+.bar-row .bt{flex:1;height:14px;background:#f0ece0;border-radius:99px;
+  overflow:hidden}
+.bar-row .bf{height:100%;border-radius:99px}
+.bar-row .bp{font-size:.74rem;color:var(--ink-soft);
+  flex:0 0 68px;text-align:right}
+.bar-row.top .bn{box-shadow:0 0 0 2px var(--gold)}
+table.sheet{width:100%;border-collapse:collapse;font-size:.8rem;background:#fff}
+table.sheet th,table.sheet td{border:1px solid var(--line);padding:6px 8px;
+  text-align:left}
+table.sheet th{background:#f6f2e6;color:var(--navy);font-size:.76rem}
+table.sheet tr:nth-child(even) td{background:#fcfaf4}
+
+/* ===== グループ分け ===== */
+.gbox{border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  margin-bottom:12px;background:#fff}
+.gbox .gh{background:var(--navy);color:#fff;padding:8px 12px;
+  font-weight:700;font-size:.88rem;display:flex;justify-content:space-between}
+.gbox .gb{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.gmini{display:flex;align-items:center;gap:8px;font-size:.84rem}
+.gmini b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;font-weight:600}
+
+.empty{text-align:center;color:var(--ink-soft);font-size:.86rem;padding:28px 10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{background:#fff;border:1.5px solid var(--line);border-radius:99px;
+  padding:5px 12px;font-size:.78rem;font-weight:600;color:var(--navy)}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.calc-note{background:#f8f5ec;border-left:4px solid var(--gold);
+  border-radius:0 8px 8px 0;padding:10px 12px;font-size:.82rem;
+  line-height:1.8;margin-top:10px}
+.calc-note code{background:#fff;border:1px solid var(--line);border-radius:4px;
+  padding:1px 5px;font-size:.9em}
+/* ===== ログイン ===== */
+#login-overlay{position:fixed;inset:0;z-index:900;display:none;
+  align-items:center;justify-content:center;padding:24px;
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-soft) 100%)}
+#login-overlay.on{display:flex}
+.login-box{background:var(--paper);border-radius:16px;padding:28px 24px;
+  max-width:360px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.login-box h2{color:var(--navy);font-size:1.15rem;border:none;margin-bottom:6px}
+.login-box .lead{font-size:.84rem;color:var(--ink-soft);margin-bottom:20px;line-height:1.8}
+.login-box button{width:100%;background:var(--navy);color:#fff;border:none;
+  border-radius:10px;padding:14px;font-weight:700;font-size:.95rem}
+.login-box .note{font-size:.74rem;color:var(--ink-soft);margin-top:16px;line-height:1.7}
+#login-error{color:var(--red);font-size:.8rem;margin-top:12px;display:none}
+
+#app-content{display:none}
+#app-content.ready{display:block}
+
+.userbar{display:flex;align-items:center;gap:8px;justify-content:center;
+  flex-wrap:wrap;font-size:.76rem;margin-top:8px;opacity:.95}
+.userbar b{font-weight:700}
+.userbar button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);
+  border-radius:99px;padding:3px 12px;font-size:.72rem;font-weight:600}
+.userbar button.on{background:var(--gold);color:#2b2000;border-color:var(--gold)}
+.scope-note{background:#fff6e0;border:1.5px solid var(--gold);border-radius:9px;
+  padding:9px 12px;font-size:.8rem;color:#6b4e00;margin-bottom:14px;font-weight:600}
+
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+  background:var(--navy);color:#fff;padding:10px 20px;border-radius:99px;
+  font-size:.85rem;font-weight:600;opacity:0;pointer-events:none;
+  transition:.2s;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 印刷(PDF保存) ===== */
+@media print{
+  body{background:#fff;padding:0}
+  header,nav,.noprint{display:none !important}
+  main{max-width:none;padding:0}
+  section{display:none !important}
+  section.on{display:block !important}
+  .card{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
+  .matrix-wrap{overflow:visible}
+}
+</style>
+</head>
+<body>
+
+<div id="login-overlay" class="on">
+  <div class="login-box">
+    <h2>ベーベー福の神ワーク</h2>
+    <div id="login-wait" class="lead">確認しています…</div>
+    <div id="login-body" style="display:none">
+      <div class="lead">ご自分のGoogleアカウントで<br>ログインしてください。</div>
+      <button id="btn-login">Googleでログイン</button>
+      <div class="note">登録した人のデータは、<b>登録したご本人だけ</b>が見られます。<br>
+        ほかの方のデータは表示されません。</div>
+    </div>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<div id="app-content">
+<header>
+  <div class="title">ベーベー<span class="fuku">福の神</span>ワーク</div>
+  <div class="sub">福の神ナンバー ／ 裏数字 ／ ご褒美数字 ／ 999の関係</div>
+  <div class="userbar" id="userbar"></div>
+</header>
+
+<nav id="tabs">
+  <button data-tab="meibo" class="on">👥 めいぼ</button>
+  <button data-tab="fuku">🍀 診断</button>
+  <button data-tab="nine">🔗 999の関係</button>
+  <button data-tab="sheet">📊 分析シート</button>
+  <button data-tab="group">🎯 グループ分け</button>
+</nav>
+
+<main>
+
+<!-- ============ めいぼ ============ -->
+<section id="tab-meibo" class="on">
+  <div class="scope-note" id="scope-note" style="display:none"></div>
+  <div class="card" id="regist-card">
+    <h2>✏️ 登録する</h2>
+    <div class="row">
+      <div class="field"><label>お名前（ニックネームでもOK）</label>
+        <input id="in-name" type="text" placeholder="例：のりぴ"></div>
+      <div class="field"><label>生年月日</label>
+        <input id="in-birth" type="date"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>グループ名（あとで変えられます）</label>
+        <input id="in-group" type="text" list="dl-groups" placeholder="例：Aチーム">
+        <datalist id="dl-groups"></datalist></div>
+      <div class="field"><label>メモ（自由）</label>
+        <input id="in-memo" type="text" placeholder="例：2期生"></div>
+    </div>
+    <div id="preview" class="hint"></div>
+    <div class="btn-row">
+      <button class="btn gold" id="btn-add">この人を登録する</button>
+      <button class="btn ghost" id="btn-clear-form">入力をけす</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 めいぼ（<span id="count-all">0</span>人）</h2>
+
+    <details class="filt" open>
+      <summary>🔽 条件をえらんで さがす</summary>
+      <div class="filt-body">
+        <div class="field">
+          <label>🍀 福の神ナンバー（「＊」はどれでもOK）</label>
+          <div class="digit-picks">
+            <div><small>1つめ</small><select id="f-n1"></select></div>
+            <div><small>2つめ</small><select id="f-n2"></select></div>
+            <div><small>3つめ</small><select id="f-n3"></select></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>🟣 裏数字 ／ 🟢 ご褒美数字</label>
+          <div class="digit-picks">
+            <div><small>潜在</small><select id="f-us"></select></div>
+            <div><small>顕在</small><select id="f-uk"></select></div>
+            <div><small>ご褒美</small><select id="f-go"></select></div>
+          </div>
+        </div>
+        <div class="field"><label>👥 グループ</label>
+          <select id="f-group"><option value="">（すべて）</option></select></div>
+        <div class="field"><label>🔤 名前・メモで さがす</label>
+          <input id="f-text" type="text" placeholder="名前の一部でもOK"></div>
+        <button class="btn ghost sm" id="btn-reset-filter">条件をぜんぶ消す</button>
+      </div>
+    </details>
+
+    <div class="hint" id="filt-result" style="margin-bottom:10px"></div>
+    <div class="plist" id="plist"></div>
+  </div>
+
+  <div class="card noprint" id="backup-card">
+    <h2>💾 バックアップ</h2>
+    <div class="hint">データはログインしたアカウントごとにネット上へ保存されるので、
+      スマホでもパソコンでも同じものが見られます。
+      念のため手元にも残しておきたいときは、ファイルに書き出してください。</div>
+    <div class="btn-row">
+      <button class="btn ghost" id="btn-export">ファイルに書き出す</button>
+      <button class="btn ghost" id="btn-import">ファイルから読み込む</button>
+      <input type="file" id="file-import" accept=".json" style="display:none">
+    </div>
+  </div>
+</section>
+
+<!-- ============ 福の神No. ============ -->
+<section id="tab-fuku">
+  <div class="card">
+    <h2>🧮 生年月日から計算する</h2>
+    <div class="hint">登録しなくても、その場で福の神No.を出せます。</div>
+    <div class="field" style="margin-top:10px"><label>生年月日</label>
+      <input id="q-birth" type="date"></div>
+    <div id="q-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>👤 めいぼの人を見る</h2>
+    <div class="field"><label>だれを見ますか？</label>
+      <select id="sel-person"><option value="">（えらんでください）</option></select></div>
+    <div id="person-detail"></div>
+  </div>
+
+  <div class="card">
+    <h2>📖 福の神No.のしくみ</h2>
+    <div class="calc-note">
+      福の神No.は<b>3つの数字</b>でできています。どれも「1桁になるまで足す」のがルールです。<br>
+      <b style="color:var(--n1)">1つめ</b>… 生まれた<b>年</b>の数字をぜんぶ足す<br>
+      　<code>1980 → 1+9+8+0=18 → 1+8=9</code><br>
+      <b style="color:var(--n2)">2つめ</b>… 生まれた<b>月</b>と<b>日</b>の数字をぜんぶ足す<br>
+      　<code>5月14日 → 5+1+4=10 → 1+0=1</code><br>
+      <b style="color:var(--n3)">3つめ</b>… <b>1つめ＋2つめ</b><br>
+      　<code>9+1=10 → 1+0=1</code><br>
+      → 1980年5月14日の人は <b>911</b>
+    </div>
+    <div class="hint" style="margin-top:10px">※ 1つめ・2つめ・3つめは、どれも<b>1〜9</b>のどれかになります（0にはなりません）。</div>
+
+    <h3 style="margin-top:18px">🟣 裏数字</h3>
+    <div class="calc-note">
+      生まれた<b>月</b>と<b>日</b>を、それぞれ1桁になるまで足したものです。<br>
+      <b>潜在数字</b>… 生まれた月　<code>6月 → 6</code>　<code>12月 → 1+2=3</code><br>
+      <b>顕在数字</b>… 生まれた日　<code>24日 → 2+4=6</code>　<code>19日 → 1+9=10 → 1</code>
+    </div>
+
+    <h3 style="margin-top:18px">🟢 ご褒美数字</h3>
+    <div class="calc-note">
+      福の神ナンバーの3つの数字を、ぜんぶ足したものです。<br>
+      <code>134 → 1+3+4 = 8</code><br>
+      2桁になったときは、さらに1桁になるまで足します。<br>
+      <code>459 → 4+5+9 = 18 → 1+8 = 9</code>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 999の関係 ============ -->
+<section id="tab-nine">
+  <div class="card">
+    <h2>🔗 999の関係とは</h2>
+    <div class="calc-note">
+      ふたりの福の神No.を、<b>同じ位どうしで足す</b>と、
+      ぜんぶ<b>9</b>になる関係です。<br>
+      <code>9＋9＝18 → 1+8=9</code> も「9」とみなします。<br><br>
+      例）<b>134</b> の人と <b>865</b> の人<br>
+      　<code>1+8=9</code>／<code>3+6=9</code>／<code>4+5=9</code> → <b>999の関係</b><br><br>
+      <b>おもしろいこと：</b>1つめと2つめが9になれば、<b>3つめは必ず自動で9になります</b>。
+      （福の神No.の作り方そのものに、そういうしくみが入っています）
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔍 相手の番号を調べる</h2>
+    <div class="field"><label>あなたの福の神No.（3桁）</label>
+      <div class="digit-picks">
+        <div><small>1つめ</small><select id="p-n1"></select></div>
+        <div><small>2つめ</small><select id="p-n2"></select></div>
+        <div><small>3つめ</small><select id="p-n3"></select></div>
+      </div>
+    </div>
+    <div id="p-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>👫 めいぼの中の999ペア</h2>
+    <div class="field"><label>どのグループで さがしますか？</label>
+      <select id="n-group"><option value="">（全員の中からさがす）</option></select></div>
+    <div id="pair-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>🔲 総あたり表</h2>
+    <div class="hint">◎のマスが999の関係です。横にスクロールできます。</div>
+    <div id="matrix-area" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<!-- ============ 分析シート ============ -->
+<section id="tab-sheet">
+  <div class="card noprint">
+    <h2>📊 分析シートを作る</h2>
+    <div class="field"><label>だれを分析しますか？</label>
+      <select id="s-group"><option value="">（全員）</option></select></div>
+    <div class="field"><label>シートのタイトル（自由）</label>
+      <input id="s-title" type="text" placeholder="例：2期生 福の神ワーク"></div>
+    <div class="btn-row">
+      <button class="btn gold" id="btn-make-sheet">シートを作る</button>
+      <button class="btn ghost" id="btn-save-png">画像(PNG)で保存</button>
+      <button class="btn ghost" id="btn-save-pdf">PDFで保存（印刷）</button>
+    </div>
+    <div class="hint" style="margin-top:8px">「PDFで保存」を押すと印刷の画面が出ます。
+      送り先（プリンタ）のところで「PDFとして保存」をえらんでください。</div>
+  </div>
+  <div id="sheet-area"></div>
+</section>
+
+<!-- ============ グループ分け ============ -->
+<section id="tab-group">
+  <div class="card noprint">
+    <h2>🎯 グループに分ける</h2>
+    <div class="field"><label>どうやって分けますか？</label>
+      <select id="g-mode">
+        <option value="n1">福の神ナンバーの「1つめ」でわける</option>
+        <option value="n2">福の神ナンバーの「2つめ」でわける</option>
+        <option value="n3">福の神ナンバーの「3つめ」でわける</option>
+        <option value="label">福の神ナンバーが同じ人をまとめる</option>
+        <option value="us">裏数字の「潜在数字」でわける</option>
+        <option value="uk">裏数字の「顕在数字」でわける</option>
+        <option value="go">ご褒美数字でわける</option>
+        <option value="nine">999の関係でペアを作る</option>
+        <option value="even">人数をそろえてバランスよく分ける</option>
+        <option value="manual">手で入れかえる</option>
+      </select></div>
+    <div class="field" id="g-count-field" style="display:none">
+      <label>いくつのグループに分けますか？</label>
+      <select id="g-count"></select></div>
+    <div class="field"><label>だれを分けますか？</label>
+      <select id="g-target"><option value="">（全員）</option></select></div>
+    <div class="btn-row">
+      <button class="btn gold" id="btn-divide">分けてみる</button>
+      <button class="btn ghost" id="btn-apply-group">この分け方をめいぼに保存する</button>
+    </div>
+    <div class="hint" style="margin-top:8px">「分けてみる」は画面に出すだけです。
+      気に入ったら「保存する」を押すと、めいぼのグループ名が書きかわります。</div>
+  </div>
+  <div id="group-area"></div>
+</section>
+
+</main>
+
+<div id="toast"></div>
+</div><!-- /#app-content -->
+<script type="module" src="firebase-bebe.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
