@@ -143,37 +143,28 @@ section.on{display:block}
 .gcheck input{margin:0;accent-color:#ff9ebb;width:15px;height:15px}
 .gcheck:has(input:checked){background:#fff0f5;border-color:#ff9ebb}
 
-/* ===== 名簿（リスト表示） ===== */
-.plist{border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
-.plist-head{display:flex;align-items:center;gap:8px;background:#ffeef4;
-  padding:7px 12px;font-size:.7rem;font-weight:800;color:var(--navy);
-  border-bottom:1.5px solid var(--line)}
-.plist-head .h-no{flex:0 0 118px}
-.plist-head .h-nm{flex:1}
-.plist-head .h-ac{flex:0 0 56px;text-align:right}
-.pcard{display:flex;align-items:center;gap:8px;background:#fff;
-  padding:8px 12px;border-bottom:1px solid var(--line)}
-.pcard:last-child{border-bottom:none}
-.pcard:nth-child(even){background:#fffbfc}
-.pcard .nums{flex:0 0 118px;display:flex;align-items:center;gap:4px}
-.pcard .nm{flex:1;min-width:0}
-.pcard .nm b{font-size:.9rem;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;display:inline-block;max-width:100%;vertical-align:middle}
-.pcard .nm small{display:block;color:var(--ink-soft);font-size:.7rem;line-height:1.5}
-.pcard .acts{flex:0 0 56px;display:flex;gap:2px;justify-content:flex-end}
-.pcard .acts button{background:none;border:none;font-size:.95rem;padding:3px 5px;
+/* ===== 名簿（1人ずつ・たてに並べる） ===== */
+.plist{display:flex;flex-direction:column;gap:10px}
+.pcard{background:#fff;border:1.5px solid var(--line);
+  border-radius:14px;padding:12px 14px}
+.prow-top{display:flex;align-items:flex-start;gap:8px}
+.prow-top .nm{flex:1;min-width:0}
+.prow-top .nm b{font-size:1rem;color:var(--navy);font-weight:800}
+.pcard .acts{flex:0 0 auto;display:flex;gap:2px}
+.pcard .acts button{background:none;border:none;font-size:1rem;padding:3px 5px;
   border-radius:6px;color:var(--ink-soft)}
+.pbirth{font-size:.74rem;color:var(--ink-soft);margin:3px 0 10px}
+.pnums{display:flex;flex-direction:column;gap:4px;max-width:290px}
+.pn{display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1.5px dashed var(--line);padding:5px 2px;
+  font-size:.82rem;font-weight:700;color:var(--navy)}
+.pn:last-child{border-bottom:none}
+/* 福の神ナンバーがいちばん大きく見えるようにする */
+.pn .fuku-badge span{width:38px;height:38px;font-size:1.5rem;border-radius:12px}
+.pn .numchip{width:32px;height:32px;font-size:1.25rem}
 .gtag{display:inline-block;background:var(--ura);color:#fff;font-size:.65rem;
-  padding:1px 7px;border-radius:99px;margin-left:5px;vertical-align:1px;
+  padding:1px 7px;border-radius:99px;margin-left:5px;vertical-align:2px;
   font-weight:700}
-/* せまい画面では数字を下の行に回す */
-@media (max-width:460px){
-  .plist-head .h-no{display:none}
-  .pcard{flex-wrap:wrap;gap:6px}
-  .pcard .nums{flex:0 0 auto;order:2;width:100%}
-  .pcard .nm{order:1;flex:1 1 60%}
-  .pcard .acts{order:1}
-}
 
 /* ===== 絞り込みパネル ===== */
 .filt{border:1.5px solid var(--gold);border-radius:10px;
@@ -595,7 +586,7 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 
 <div id="toast"></div>
 </div><!-- /#app-content -->
-<script type="module" src="firebase-bebe.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script type="module" src="firebase-bebe.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

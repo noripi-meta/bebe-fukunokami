@@ -502,19 +502,30 @@
     const dg = diagOf(p);
     const f = dg ? dg.f : null;
     return '<div class="pcard">' +
-      '<div class="nums">' + badge(f) + uraBadge(dg && dg.ura) + goBadge(dg && dg.go) + "</div>" +
-      '<div class="nm"><b>' + esc(p.name) + "</b>" + groupTagsHtml(p) +
-      "<small>" + esc(slashOf(p.birth)) +
-      (dg ? " ／ 潜在" + dg.ura.sen + " 顕在" + dg.ura.ken + " ご褒美" + dg.go.single +
-            " ／ 999の相手 " + partnerLabel(f) : "") +
-      ((p.memo || "").trim() ? " ／ " + esc(p.memo) : "") +
-      (readOnly() && p.ownerName ? " ／ 登録：" + esc(p.ownerName) : "") +
-      "</small></div>" +
-      '<div class="acts noprint">' +
-      (readOnly() ? "" :
-        '<button data-edit="' + p.id + '" title="なおす">✏️</button>' +
-        '<button data-del="' + p.id + '" title="けす">✕</button>') +
-      "</div></div>";
+      '<div class="prow-top">' +
+        '<div class="nm"><b>' + esc(p.name) + "</b>" + groupTagsHtml(p) + "</div>" +
+        '<div class="acts noprint">' +
+        (readOnly() ? "" :
+          '<button data-edit="' + p.id + '" title="なおす">✏️</button>' +
+          '<button data-del="' + p.id + '" title="けす">✕</button>') +
+        "</div>" +
+      "</div>" +
+      '<div class="pbirth">' + esc(slashOf(p.birth)) + "</div>" +
+      (dg
+        ? '<div class="pnums">' +
+            '<div class="pn"><span>福の神ナンバー</span>' + badge(f) + "</div>" +
+            '<div class="pn"><span>潜在数字</span>' + numChip(dg.ura.sen) + "</div>" +
+            '<div class="pn"><span>顕在数字</span>' + numChip(dg.ura.ken) + "</div>" +
+            '<div class="pn"><span>ご褒美数字</span>' + numChip(dg.go.single) + "</div>" +
+            ((p.memo || "").trim()
+              ? '<div class="pn"><span>メモ</span><span style="font-weight:600">' +
+                esc(p.memo) + "</span></div>" : "") +
+            (readOnly() && p.ownerName
+              ? '<div class="pn"><span>登録した人</span><span style="font-weight:600">' +
+                esc(p.ownerName) + "</span></div>" : "") +
+          "</div>"
+        : '<div class="hint warn">生年月日が読み取れません</div>') +
+      "</div>";
   }
 
   function renderMeibo() {
@@ -526,11 +537,7 @@
       ? "条件に合う人：<b>" + hit.length + "人</b>（全" + people.length + "人のうち）"
       : "";
     $("plist").innerHTML = hit.length
-      ? '<div class="plist-head">' +
-        '<span class="h-no">🍀福の神　🟣裏　🟢ご褒美</span>' +
-        '<span class="h-nm">お名前・生年月日</span>' +
-        '<span class="h-ac"></span></div>' +
-        hit.map(personCardHtml).join("")
+      ? hit.map(personCardHtml).join("")
       : '<div class="empty">' + (people.length
         ? "条件に合う人がいません。"
         : "まだだれも登録されていません。上の欄から登録してください。") + "</div>";
