@@ -11,7 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import {
   getFirestore, collection, collectionGroup, doc,
-  getDocs, writeBatch
+  getDoc, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 // MetaQ占いアプリと同じFirebaseプロジェクトを使う（置き場所だけ分けている）
@@ -26,6 +26,9 @@ const firebaseConfig = {
 
 const ADMIN_EMAIL = "orn.pomme@gmail.com"; // 全員ぶんを見られる人
 const ROOT = "bebeFuku";                   // この アプリ専用の置き場所
+// グループ名の一覧は、people の中の特別な1件として入れておく
+// （Firestoreのルールを増やさずに済ませるため）
+const GROUPS_ID = "_groups";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -77,26 +80,45 @@ const BebeDB = {
   logout: function () { return signOut(auth); },
 
   // scope: "mine" = 自分が登録した人 / "all" = 全員ぶん（管理者のみ）
-  loadPeople: async function (scope) {
-    if (!currentUser) return [];
+  // → { people: [...], groups: [...] } を返す
+  loadAll: async function (scope) {
+    if (!currentUser) return { people: [], groups: [] };
+    let rows;
     if (scope === "all" && this.isAdmin) {
       const snap = await getDocs(collectionGroup(db, "people"));
-      return snap.docs.map(function (d) {
+      rows = snap.docs.map(function (d) {
         const parent = d.ref.parent.parent;
-        return Object.assign({}, d.data(), {
-          id: d.id,
-          _ownerUid: parent ? parent.id : ""
-        });
+        return { id: d.id, data: d.data(), owner: parent ? parent.id : "" };
+      });
+    } else {
+      const snap = await getDocs(peopleCol(currentUser.uid));
+      rows = snap.docs.map(function (d) {
+        return { id: d.id, data: d.data(), owner: currentUser.uid };
       });
     }
-    const snap = await getDocs(peopleCol(currentUser.uid));
-    return snap.docs.map(function (d) {
-      return Object.assign({}, d.data(), { id: d.id, _ownerUid: currentUser.uid });
+    const people = [];
+    let myGroups = null;
+    rows.forEach(function (r) {
+      if (r.data && r.data._kind === "groups") {
+        if (r.owner === currentUser.uid) {
+          myGroups = Array.isArray(r.data.names) ? r.data.names : [];
+        }
+        return; // グループ名の入れ物は「人」として扱わない
+      }
+      people.push(Object.assign({}, r.data, { id: r.id, _ownerUid: r.owner }));
     });
+    // 全員ぶん表示のときは自分のぶんが混ざらないことがあるので、個別に読む
+    if (myGroups === null) {
+      try {
+        const g = await getDoc(personDoc(currentUser.uid, GROUPS_ID));
+        myGroups = (g.exists() && Array.isArray(g.data().names)) ? g.data().names : [];
+      } catch (e) { myGroups = []; }
+    }
+    return { people: people, groups: myGroups };
   },
 
   // いまの一覧をまるごと保存し、消えた人は消す
-  persist: async function (list, removedIds) {
+  persist: async function (list, removedIds, groups) {
     if (!currentUser) throw new Error("ログインしていません");
     const uid = currentUser.uid;
     const batch = writeBatch(db);
@@ -112,7 +134,11 @@ const BebeDB = {
       });
     });
     (removedIds || []).forEach(function (id) {
-      batch.delete(personDoc(uid, id));
+      if (id !== GROUPS_ID) batch.delete(personDoc(uid, id));
+    });
+    batch.set(personDoc(uid, GROUPS_ID), {
+      _kind: "groups",
+      names: (groups || []).map(String)
     });
     await batch.commit();
   }

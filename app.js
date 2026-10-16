@@ -80,6 +80,39 @@
     if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
     return { y: y, m: mo, d: d };
   }
+  // 打ち込まれた生年月日を、多少くずれていても読み取る
+  //   1990/06/24 ・ 1990-6-24 ・ 1990.6.24 ・ 1990 6 24 ・ 19900624 ・ 1990年6月24日
+  function parseLoose(str) {
+    const t = String(str || "")
+      .replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
+      .trim();
+    if (!t) return null;
+    const nums = t.match(/\d+/g);
+    let y, m, d;
+    if (nums && nums.length >= 3) {
+      y = +nums[0]; m = +nums[1]; d = +nums[2];
+    } else {
+      const digits = t.replace(/\D/g, "");
+      if (digits.length !== 8) return null;
+      y = +digits.slice(0, 4); m = +digits.slice(4, 6); d = +digits.slice(6, 8);
+    }
+    if (!(y >= 1900 && y <= 2100)) return null;
+    if (!(m >= 1 && m <= 12)) return null;
+    if (!(d >= 1 && d <= 31)) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return { y: y, m: m, d: d };
+  }
+  // 保存する形（YYYY-MM-DD）にそろえる
+  function isoOf(b) {
+    return b.y + "-" + ("0" + b.m).slice(-2) + "-" + ("0" + b.d).slice(-2);
+  }
+  // 画面に出す形（1990/06/24）
+  function slashOf(birth) {
+    const b = parseBirth(birth);
+    return b ? b.y + "/" + ("0" + b.m).slice(-2) + "/" + ("0" + b.d).slice(-2) : String(birth || "");
+  }
+
   function fukuOf(p) {
     const b = parseBirth(p.birth);
     return b ? calcFuku(b.y, b.m, b.d) : null;
@@ -130,6 +163,7 @@
   // データの出し入れ
   // ------------------------------------------------------------------
   let people = [];
+  let groupList = [];   // のりぴさんが作ったグループ名（作った順）
   let editingId = null;
   let lastPlan = null; // グループ分けの下書き
 
@@ -145,7 +179,7 @@
     const ids = removedIds.slice();
     removedIds = [];
     saving = true;
-    window.BebeDB.persist(people, ids).then(function () {
+    window.BebeDB.persist(people, ids, groupList).then(function () {
       saving = false;
     }).catch(function (e) {
       saving = false;
@@ -159,9 +193,11 @@
   async function reloadFromServer() {
     if (!window.BebeDB || !window.BebeDB.user) return;
     try {
-      people = await window.BebeDB.loadPeople(scope);
+      const res = await window.BebeDB.loadAll(scope);
+      people = res.people;
+      groupList = res.groups;
     } catch (e) {
-      people = [];
+      people = []; groupList = [];
       alert("データを読み込めませんでした。\n\n（" + (e && e.message ? e.message : e) + "）");
     }
     refreshGroupPickers();
@@ -169,13 +205,57 @@
     renderScopeNote();
   }
 
+  // 作ったグループ ＋ すでに使われているグループ名
   function groupNames() {
-    const set = [];
+    const out = [];
+    groupList.forEach(function (g) {
+      g = String(g || "").trim();
+      if (g && out.indexOf(g) < 0) out.push(g);
+    });
     people.forEach(function (p) {
       const g = (p.group || "").trim();
-      if (g && set.indexOf(g) < 0) set.push(g);
+      if (g && out.indexOf(g) < 0) out.push(g);
     });
-    return set.sort(function (a, b) { return a.localeCompare(b, "ja"); });
+    return out;
+  }
+
+  function addGroup() {
+    const name = $("new-group").value.trim();
+    if (!name) { alert("グループ名を入れてください。"); return; }
+    if (groupNames().indexOf(name) >= 0) { alert("その名前はもうあります。"); return; }
+    groupList.push(name);
+    $("new-group").value = "";
+    save();
+    refreshGroupPickers();
+    toast("「" + name + "」を作りました");
+  }
+
+  function deleteGroup(name) {
+    const used = people.filter(function (p) { return (p.group || "").trim() === name; });
+    const msg = used.length
+      ? "「" + name + "」を消します。\nこのグループの " + used.length +
+        "人は「グループなし」になります。\n（登録そのものは消えません）"
+      : "「" + name + "」を消します。よろしいですか？";
+    if (!confirm(msg)) return;
+    groupList = groupList.filter(function (g) { return g !== name; });
+    used.forEach(function (p) { p.group = ""; });
+    save();
+    refreshGroupPickers();
+    renderMeibo();
+    toast("「" + name + "」を消しました");
+  }
+
+  function renderGroupChips() {
+    const box = $("group-chips");
+    if (!box) return;
+    const names = groupNames();
+    box.innerHTML = names.length
+      ? names.map(function (g) {
+          const n = people.filter(function (p) { return (p.group || "").trim() === g; }).length;
+          return '<span class="gchip">' + esc(g) + "（" + n + "人）" +
+            '<button data-gdel="' + esc(g) + '" title="けす">✕</button></span>';
+        }).join("")
+      : '<span class="hint">まだグループがありません。</span>';
   }
 
   // ------------------------------------------------------------------
@@ -202,9 +282,19 @@
     fillGroupSelect($("n-group"), "（全員の中からさがす）");
     fillGroupSelect($("s-group"), "（全員）");
     fillGroupSelect($("g-target"), "（全員）");
-    $("dl-groups").innerHTML = groupNames().map(function (g) {
-      return '<option value="' + esc(g) + '">';
-    }).join("");
+    const opts = '<option value="">（グループなし）</option>' +
+      groupNames().map(function (g) {
+        return '<option value="' + esc(g) + '">' + esc(g) + "</option>";
+      }).join("");
+    ["in-group", "q-group"].forEach(function (id) {
+      const sel = $(id);
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = opts;
+      sel.value = cur;
+      if (sel.value !== cur) sel.value = "";
+    });
+    renderGroupChips();
     const psel = $("sel-person");
     const cur = psel.value;
     psel.innerHTML = '<option value="">（えらんでください）</option>' +
@@ -253,11 +343,17 @@
   // ① めいぼ
   // ==================================================================
   function formPreview() {
-    const b = parseBirth($("in-birth").value);
+    const b = parseLoose($("in-birth").value);
     const box = $("preview");
-    if (!b) { box.innerHTML = ""; return; }
+    if (!b) {
+      box.innerHTML = $("in-birth").value.trim()
+        ? '<div class="hint warn" style="margin-top:4px">生年月日が読み取れません。1990/06/24 のように入れてください。</div>'
+        : "";
+      return;
+    }
     const f = calcFuku(b.y, b.m, b.d), u = calcUra(b.m, b.d), g = calcGohobi(f);
-    box.innerHTML = '<div style="margin-top:4px;line-height:2.2">この人は → ' +
+    box.innerHTML = '<div style="margin-top:4px;line-height:2.2">' +
+      '<span class="hint">' + b.y + "年" + b.m + "月" + b.d + "日 →</span> " +
       badge(f) + " <b style='margin:0 10px 0 6px'>" + f.label + "</b>" +
       '<span class="minilab">裏</span>' + uraBadge(u) +
       ' <span class="minilab">ご褒美</span>' + goBadge(g) +
@@ -266,12 +362,12 @@
 
   function addOrUpdate() {
     const name = $("in-name").value.trim();
-    const birth = $("in-birth").value.trim();
+    const b = parseLoose($("in-birth").value);
     if (!name) { alert("お名前を入れてください。"); return; }
-    if (!parseBirth(birth)) { alert("生年月日を正しく入れてください。"); return; }
+    if (!b) { alert("生年月日を 1990/06/24 のように入れてください。"); return; }
     const data = {
       name: name,
-      birth: birth,
+      birth: isoOf(b),
       group: $("in-group").value.trim(),
       memo: $("in-memo").value.trim()
     };
@@ -305,7 +401,7 @@
     if (!p) return;
     editingId = id;
     $("in-name").value = p.name || "";
-    $("in-birth").value = p.birth || "";
+    $("in-birth").value = slashOf(p.birth);
     $("in-group").value = p.group || "";
     $("in-memo").value = p.memo || "";
     $("btn-add").textContent = "この内容に書きかえる";
@@ -362,21 +458,20 @@
   function personCardHtml(p) {
     const dg = diagOf(p);
     const f = dg ? dg.f : null;
-    return '<div class="pcard">' + badge(f) +
-      '<div class="nm"><b>' + esc(p.name) +
+    return '<div class="pcard">' +
+      '<div class="nums">' + badge(f) + uraBadge(dg && dg.ura) + goBadge(dg && dg.go) + "</div>" +
+      '<div class="nm"><b>' + esc(p.name) + "</b>" +
       ((p.group || "").trim() ? '<span class="gtag">' + esc(p.group) + "</span>" : "") +
-      "</b><small>" + esc(birthJa(p.birth)) +
-      (dg ? ' <span class="minilab">裏</span>' + uraBadge(dg.ura) +
-            ' <span class="minilab">ご褒美</span>' + goBadge(dg.go) +
-            " ／ 999の相手 " + partnerLabel(f) : "") +
+      "<small>" + esc(slashOf(p.birth)) +
+      (dg ? " ／ 999の相手 " + partnerLabel(f) : "") +
       ((p.memo || "").trim() ? " ／ " + esc(p.memo) : "") +
-      (readOnly() && p.ownerName ? ' ／ 登録：' + esc(p.ownerName) : "") +
+      (readOnly() && p.ownerName ? " ／ 登録：" + esc(p.ownerName) : "") +
       "</small></div>" +
+      '<div class="acts noprint">' +
       (readOnly() ? "" :
-        '<div class="acts noprint">' +
         '<button data-edit="' + p.id + '" title="なおす">✏️</button>' +
-        '<button data-del="' + p.id + '" title="けす">✕</button>' +
-        "</div>") + "</div>";
+        '<button data-del="' + p.id + '" title="けす">✕</button>') +
+      "</div></div>";
   }
 
   function renderMeibo() {
@@ -388,7 +483,11 @@
       ? "条件に合う人：<b>" + hit.length + "人</b>（全" + people.length + "人のうち）"
       : "";
     $("plist").innerHTML = hit.length
-      ? hit.map(personCardHtml).join("")
+      ? '<div class="plist-head">' +
+        '<span class="h-no">🍀福の神　🟣裏　🟢ご褒美</span>' +
+        '<span class="h-nm">お名前・生年月日</span>' +
+        '<span class="h-ac"></span></div>' +
+        hit.map(personCardHtml).join("")
       : '<div class="empty">' + (people.length
         ? "条件に合う人がいません。"
         : "まだだれも登録されていません。上の欄から登録してください。") + "</div>";
@@ -453,8 +552,15 @@
 
   function renderQuickCalc() {
     const box = $("q-result");
-    const b = parseBirth($("q-birth").value);
-    if (!b) { box.innerHTML = ""; return; }
+    const b = parseLoose($("q-birth").value);
+    if (!b) {
+      box.innerHTML = $("q-birth").value.trim()
+        ? '<div class="hint warn">生年月日が読み取れません。1990/06/24 のように入れてください。</div>'
+        : "";
+      $("q-save").style.display = "none";
+      return;
+    }
+    $("q-save").style.display = readOnly() ? "none" : "";
     const dg = { b: b, f: calcFuku(b.y, b.m, b.d), ura: calcUra(b.m, b.d), go: null };
     dg.go = calcGohobi(dg.f);
     box.innerHTML = diagHeroHtml(dg) + fukuExplainHtml(b, dg.f, dg.ura, dg.go);
@@ -479,8 +585,30 @@
       "</div>" + diagHeroHtml(dg) + fukuExplainHtml(b, f, dg.ura, dg.go) +
       "<h3>🔗 めいぼの中の999の相手（" + mates.length + "人）</h3>" +
       (mates.length
-        ? sorted(mates).map(personCardHtml).join("")
+        ? '<div class="plist">' + sorted(mates).map(personCardHtml).join("") + "</div>"
         : '<div class="hint">いまのめいぼには、999の関係の人はいません。</div>');
+  }
+
+  // 診断タブで出した人を、そのままめいぼに登録する
+  function addFromQuick() {
+    const name = $("q-name").value.trim();
+    const b = parseLoose($("q-birth").value);
+    if (!b) { alert("生年月日を 1990/06/24 のように入れてください。"); return; }
+    if (!name) { alert("お名前を入れてください。"); return; }
+    people.push({
+      id: uid(),
+      name: name,
+      birth: isoOf(b),
+      group: $("q-group").value.trim(),
+      memo: $("q-memo").value.trim(),
+      createdAt: Date.now()
+    });
+    save();
+    $("q-name").value = "";
+    $("q-memo").value = "";
+    refreshGroupPickers();
+    renderMeibo();
+    toast(name + " さんをめいぼに登録しました");
   }
 
   function renderFukuTab() { renderQuickCalc(); renderPersonDetail(); }
@@ -503,7 +631,7 @@
       '<div style="font-size:1.1rem;font-weight:800;margin-top:8px">' + pl + "</div></div>" +
       (auto ? "" : '<div class="hint warn">※この3桁の組み合わせは、生年月日からは出てこない番号です（3つめは「1つめ＋2つめ」になるはず）。</div>') +
       "<h3>めいぼの中にいる相手（" + hit.length + "人）</h3>" +
-      (hit.length ? sorted(hit).map(personCardHtml).join("")
+      (hit.length ? '<div class="plist">' + sorted(hit).map(personCardHtml).join("") + "</div>"
         : '<div class="hint">いまのめいぼにはいません。</div>');
   }
 
@@ -815,9 +943,13 @@
       const f = fukuOf(p);
       h += '<div class="gmini" style="margin-bottom:8px">' + badge(f) +
         "<b>" + esc(p.name) + "</b>" +
-        '<input type="text" data-gset="' + p.id + '" value="' + esc(p.group || "") +
-        '" placeholder="グループ名" list="dl-groups" ' +
-        'style="flex:0 0 130px;padding:6px 8px;border:1.5px solid var(--line);border-radius:6px"></div>';
+        '<select data-gset="' + p.id + '" ' +
+        'style="flex:0 0 140px;padding:6px 8px;border:1.5px solid var(--line);border-radius:6px">' +
+        '<option value="">（なし）</option>' +
+        groupNames().map(function (g) {
+          return '<option value="' + esc(g) + '"' +
+            ((p.group || "").trim() === g ? " selected" : "") + ">" + esc(g) + "</option>";
+        }).join("") + "</select></div>";
     });
     h += "</div>";
     $("group-area").innerHTML = h;
@@ -830,6 +962,7 @@
     }
     if (!confirm("めいぼのグループ名を、この分け方に書きかえます。よろしいですか？")) return;
     lastPlan.forEach(function (g) {
+      if (groupList.indexOf(g.name) < 0) groupList.push(g.name);
       g.members.forEach(function (m) {
         const p = people.find(function (x) { return x.id === m.id; });
         if (p) p.group = g.name;
@@ -944,6 +1077,10 @@
     }
     if (form) form.style.display = ro ? "none" : "";
     if (backup) backup.style.display = ro ? "none" : "";
+    const qs = $("q-save");
+    if (qs && ro) qs.style.display = "none";
+    const gc = $("group-card");
+    if (gc) gc.style.display = ro ? "none" : "";
   }
 
   // ==================================================================
@@ -994,6 +1131,15 @@
     // 福の神No.
     $("q-birth").addEventListener("input", renderQuickCalc);
     $("sel-person").addEventListener("change", renderPersonDetail);
+    $("btn-q-add").addEventListener("click", addFromQuick);
+    $("btn-add-group").addEventListener("click", addGroup);
+    $("new-group").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") addGroup();
+    });
+    $("group-chips").addEventListener("click", function (e) {
+      const t = e.target.closest("[data-gdel]");
+      if (t) deleteGroup(t.dataset.gdel);
+    });
 
     // 999
     ["p-n1", "p-n2", "p-n3"].forEach(function (id) {
@@ -1071,7 +1217,7 @@
           renderUserBar();
           reloadFromServer();
         } else {
-          people = [];
+          people = []; groupList = [];
           scope = "mine";
           content.classList.remove("ready");
           overlay.classList.add("on");

@@ -5,13 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>ベーベー福の神ワーク</title>
+<link rel="icon" href="logo.jpg">
+<link rel="apple-touch-icon" href="logo.jpg">
 <style>
 :root{
-  --navy:#1b2a4a; --navy-soft:#2c3f67; --gold:#c9a227; --gold-lt:#e8c75c;
-  --cream:#fdfaf3; --paper:#ffffff; --ink:#23262e; --ink-soft:#6b7280;
-  --red:#c0392b; --line:#e6dfcc; --shadow:0 2px 10px rgba(27,42,74,.08);
-  --n1:#e9736b; --n2:#f0b429; --n3:#4a9fd8;
-  --ura:#8e6bbf; --go:#2e9e7a;
+  /* ふんわり甘い配色（ピンク × ラベンダー × クリーム） */
+  --navy:#9b5a8c;        /* 見出し・文字の濃い色 */
+  --navy-soft:#c47ba8;   /* ヘッダーのグラデーション用 */
+  --gold:#ffc9d9;        /* 下線・ふちどり */
+  --gold-lt:#fff0a8;     /* タイトルの差し色 */
+  --cream:#fff7f9;       /* 背景 */
+  --paper:#ffffff;
+  --ink:#5a4650; --ink-soft:#a08b97;
+  --red:#ec6b8a;
+  --line:#ffe1ea;
+  --shadow:0 2px 12px rgba(196,123,168,.13);
+  --n1:#ff8fa8; --n2:#ffc95c; --n3:#8fc5ec;
+  --ura:#c3a0e8; --go:#85d9c0;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--cream);color:var(--ink);
@@ -22,31 +32,29 @@ button{font:inherit;cursor:pointer}
 input,select,textarea{font:inherit}
 
 /* ===== ヘッダー ===== */
-header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-soft) 100%);
-  color:#fff;padding:18px 16px 14px;text-align:center;box-shadow:var(--shadow)}
-header .title{font-size:1.25rem;font-weight:700;letter-spacing:.04em}
-header .title .fuku{color:var(--gold-lt)}
-header .sub{font-size:.78rem;opacity:.85;margin-top:2px}
+header{background:#fff;padding:10px 16px 7px;text-align:center;
+  border-bottom:3px solid #ffc9d9;box-shadow:0 2px 14px rgba(201,163,234,.18)}
+header .logo{display:block;margin:0 auto;height:auto;
+  max-height:88px;max-width:min(100%,340px)}
 
 /* ===== タブ ===== */
-nav{display:flex;overflow-x:auto;background:var(--paper);
-  border-bottom:2px solid var(--line);position:sticky;top:0;z-index:50;
-  scrollbar-width:none}
-nav::-webkit-scrollbar{display:none}
-nav button{flex:0 0 auto;background:none;border:none;padding:12px 15px;
-  font-size:.85rem;font-weight:600;color:var(--ink-soft);
+nav{display:flex;flex-wrap:wrap;background:var(--paper);
+  border-bottom:2px solid var(--line);position:sticky;top:0;z-index:50}
+nav button{flex:1 1 33%;background:none;border:none;padding:11px 6px;
+  font-size:.82rem;font-weight:700;color:var(--ink-soft);
   border-bottom:3px solid transparent;white-space:nowrap}
-nav button.on{color:var(--navy);border-bottom-color:var(--gold)}
+@media (min-width:620px){ nav button{flex:1 1 auto;padding:12px 18px} }
+nav button.on{color:var(--navy);border-bottom-color:#ff9ebb}
 
 main{max-width:900px;margin:0 auto;padding:16px 14px 40px}
 section{display:none}
 section.on{display:block}
 
 /* ===== カード ===== */
-.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;
+.card{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;
   padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
 .card>h2{font-size:1.05rem;color:var(--navy);
-  border-bottom:2px solid var(--gold);padding-bottom:7px;margin-bottom:12px}
+  border-bottom:2.5px solid var(--gold);padding-bottom:7px;margin-bottom:12px}
 .card>h3{font-size:.95rem;color:var(--navy);margin-top:16px}
 .hint{font-size:.8rem;color:var(--ink-soft);line-height:1.6}
 .hint.warn{color:var(--red)}
@@ -60,12 +68,12 @@ section.on{display:block}
 .field input:focus,.field select:focus,.field textarea:focus{
   outline:none;border-color:var(--gold)}
 .row{display:flex;gap:10px;flex-wrap:wrap}
-.row>*{flex:1 1 140px;min-width:0}
+.row>*{flex:1 1 170px;min-width:0}
 
-.btn{background:var(--navy);color:#fff;border:none;border-radius:8px;
+.btn{background:var(--navy);color:#fff;border:none;border-radius:10px;
   padding:11px 20px;font-weight:700;font-size:.9rem}
 .btn:active{opacity:.75}
-.btn.gold{background:var(--gold);color:#2b2000}
+.btn.gold{background:linear-gradient(135deg,#ffa8c5,#ffc9d9);color:#7a3a5c}
 .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 .btn.danger{background:#fff;color:var(--red);border:1.5px solid var(--red)}
 .btn.sm{padding:6px 12px;font-size:.78rem;border-radius:6px}
@@ -73,11 +81,11 @@ section.on{display:block}
 
 /* ===== 福の神No.バッジ ===== */
 .fuku-badge{display:inline-flex;gap:3px;vertical-align:middle}
-.fuku-badge span{width:28px;height:28px;border-radius:7px;color:#fff;
+.fuku-badge span{width:26px;height:26px;border-radius:9px;color:#fff;
   font-weight:800;font-size:1rem;display:flex;align-items:center;
   justify-content:center;font-family:ui-monospace,monospace}
 .fuku-badge span:nth-child(1){background:var(--n1)}
-.fuku-badge span:nth-child(2){background:var(--n2);color:#43330a}
+.fuku-badge span:nth-child(2){background:var(--n2);color:#6b4a00}
 .fuku-badge span:nth-child(3){background:var(--n3)}
 .fuku-badge.big span{width:46px;height:46px;font-size:1.6rem;border-radius:10px}
 
@@ -102,20 +110,37 @@ section.on{display:block}
 .hero-k{font-size:.72rem;font-weight:700;color:var(--ink-soft);margin-bottom:7px}
 .hero-v{font-size:.85rem;font-weight:800;color:var(--navy);margin-top:7px}
 
-/* ===== 名簿リスト ===== */
-.plist{display:flex;flex-direction:column;gap:8px}
-.pcard{display:flex;align-items:center;gap:10px;background:#fff;
-  border:1px solid var(--line);border-left:5px solid var(--gold);
-  border-radius:9px;padding:10px 12px}
+/* ===== 名簿（リスト表示） ===== */
+.plist{border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.plist-head{display:flex;align-items:center;gap:8px;background:#ffeef4;
+  padding:7px 12px;font-size:.7rem;font-weight:800;color:var(--navy);
+  border-bottom:1.5px solid var(--line)}
+.plist-head .h-no{flex:0 0 118px}
+.plist-head .h-nm{flex:1}
+.plist-head .h-ac{flex:0 0 56px;text-align:right}
+.pcard{display:flex;align-items:center;gap:8px;background:#fff;
+  padding:8px 12px;border-bottom:1px solid var(--line)}
+.pcard:last-child{border-bottom:none}
+.pcard:nth-child(even){background:#fffbfc}
+.pcard .nums{flex:0 0 118px;display:flex;align-items:center;gap:4px}
 .pcard .nm{flex:1;min-width:0}
-.pcard .nm b{display:block;font-size:.95rem;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis}
-.pcard .nm small{color:var(--ink-soft);font-size:.74rem;line-height:2}
-.pcard .acts{display:flex;gap:4px}
-.pcard .acts button{background:none;border:none;font-size:1rem;padding:4px 6px;
-  border-radius:5px;color:var(--ink-soft)}
-.gtag{display:inline-block;background:var(--navy);color:#fff;font-size:.68rem;
-  padding:1px 7px;border-radius:99px;margin-left:5px;vertical-align:1px}
+.pcard .nm b{font-size:.9rem;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;display:inline-block;max-width:100%;vertical-align:middle}
+.pcard .nm small{display:block;color:var(--ink-soft);font-size:.7rem;line-height:1.5}
+.pcard .acts{flex:0 0 56px;display:flex;gap:2px;justify-content:flex-end}
+.pcard .acts button{background:none;border:none;font-size:.95rem;padding:3px 5px;
+  border-radius:6px;color:var(--ink-soft)}
+.gtag{display:inline-block;background:var(--ura);color:#fff;font-size:.65rem;
+  padding:1px 7px;border-radius:99px;margin-left:5px;vertical-align:1px;
+  font-weight:700}
+/* せまい画面では数字を下の行に回す */
+@media (max-width:460px){
+  .plist-head .h-no{display:none}
+  .pcard{flex-wrap:wrap;gap:6px}
+  .pcard .nums{flex:0 0 auto;order:2;width:100%}
+  .pcard .nm{order:1;flex:1 1 60%}
+  .pcard .acts{order:1}
+}
 
 /* ===== 絞り込みパネル ===== */
 .filt{border:1.5px solid var(--gold);border-radius:10px;
@@ -191,6 +216,11 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 .chip{background:#fff;border:1.5px solid var(--line);border-radius:99px;
   padding:5px 12px;font-size:.78rem;font-weight:600;color:var(--navy)}
 .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.gchip{display:inline-flex;align-items:center;gap:6px;background:#fff;
+  border:1.5px solid var(--ura);border-radius:99px;padding:4px 6px 4px 12px;
+  font-size:.8rem;font-weight:700;color:var(--navy)}
+.gchip button{background:none;border:none;color:var(--ink-soft);
+  font-size:.85rem;padding:0 4px;border-radius:50%}
 .calc-note{background:#f8f5ec;border-left:4px solid var(--gold);
   border-radius:0 8px 8px 0;padding:10px 12px;font-size:.82rem;
   line-height:1.8;margin-top:10px}
@@ -213,12 +243,12 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 #app-content{display:none}
 #app-content.ready{display:block}
 
-.userbar{display:flex;align-items:center;gap:8px;justify-content:center;
-  flex-wrap:wrap;font-size:.76rem;margin-top:8px;opacity:.95}
-.userbar b{font-weight:700}
-.userbar button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);
-  border-radius:99px;padding:3px 12px;font-size:.72rem;font-weight:600}
-.userbar button.on{background:var(--gold);color:#2b2000;border-color:var(--gold)}
+.userbar{display:flex;align-items:center;gap:6px;justify-content:center;
+  flex-wrap:wrap;font-size:.74rem;margin-top:6px;color:var(--ink-soft)}
+.userbar b{font-weight:700;color:var(--navy)}
+.userbar button{background:#fff;color:var(--navy);border:1.5px solid var(--line);
+  border-radius:99px;padding:3px 12px;font-size:.7rem;font-weight:700}
+.userbar button.on{background:#ffa8c5;color:#fff;border-color:#ffa8c5}
 .scope-note{background:#fff6e0;border:1.5px solid var(--gold);border-radius:9px;
   padding:9px 12px;font-size:.8rem;color:#6b4e00;margin-bottom:14px;font-weight:600}
 
@@ -231,7 +261,8 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 /* ===== 印刷(PDF保存) ===== */
 @media print{
   body{background:#fff;padding:0}
-  header,nav,.noprint{display:none !important}
+  nav,.noprint,.userbar{display:none !important}
+  header{border:none;box-shadow:none;padding:0 0 8px}
   main{max-width:none;padding:0}
   section{display:none !important}
   section.on{display:block !important}
@@ -244,7 +275,8 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 
 <div id="login-overlay" class="on">
   <div class="login-box">
-    <h2>ベーベー福の神ワーク</h2>
+    <img src="logo.jpg?v=1" alt="ベーベー福の神ワーク"
+         style="display:block;margin:0 auto 14px;max-width:min(100%,240px);height:auto">
     <div id="login-wait" class="lead">確認しています…</div>
     <div id="login-body" style="display:none">
       <div class="lead">ご自分のGoogleアカウントで<br>ログインしてください。</div>
@@ -258,8 +290,7 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 
 <div id="app-content">
 <header>
-  <div class="title">ベーベー<span class="fuku">福の神</span>ワーク</div>
-  <div class="sub">福の神ナンバー ／ 裏数字 ／ ご褒美数字 ／ 999の関係</div>
+  <img src="logo.jpg?v=1" alt="ベーベー福の神ワーク" class="logo">
   <div class="userbar" id="userbar"></div>
 </header>
 
@@ -279,16 +310,16 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
   <div class="card" id="regist-card">
     <h2>✏️ 登録する</h2>
     <div class="row">
-      <div class="field"><label>お名前（ニックネームでもOK）</label>
+      <div class="field"><label>お名前</label>
         <input id="in-name" type="text" placeholder="例：のりぴ"></div>
       <div class="field"><label>生年月日</label>
-        <input id="in-birth" type="date"></div>
+        <input id="in-birth" type="text" inputmode="numeric" autocomplete="off"
+               placeholder="1990/06/24"></div>
     </div>
     <div class="row">
-      <div class="field"><label>グループ名（あとで変えられます）</label>
-        <input id="in-group" type="text" list="dl-groups" placeholder="例：Aチーム">
-        <datalist id="dl-groups"></datalist></div>
-      <div class="field"><label>メモ（自由）</label>
+      <div class="field"><label>グループ</label>
+        <select id="in-group"></select></div>
+      <div class="field"><label>メモ</label>
         <input id="in-memo" type="text" placeholder="例：2期生"></div>
     </div>
     <div id="preview" class="hint"></div>
@@ -296,6 +327,18 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
       <button class="btn gold" id="btn-add">この人を登録する</button>
       <button class="btn ghost" id="btn-clear-form">入力をけす</button>
     </div>
+  </div>
+
+  <div class="card" id="group-card">
+    <h2>👥 グループを作る</h2>
+    <div class="hint" style="margin-bottom:10px">さきにグループを作っておくと、
+      登録するときに えらぶだけで済みます。</div>
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <input id="new-group" type="text" placeholder="例：Aチーム"
+        style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px">
+      <button class="btn gold" id="btn-add-group" style="flex:0 0 auto">作る</button>
+    </div>
+    <div id="group-chips" class="chips"></div>
   </div>
 
   <div class="card">
@@ -351,8 +394,24 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
     <h2>🧮 生年月日から計算する</h2>
     <div class="hint">登録しなくても、その場で福の神No.を出せます。</div>
     <div class="field" style="margin-top:10px"><label>生年月日</label>
-      <input id="q-birth" type="date"></div>
+      <input id="q-birth" type="text" inputmode="numeric" autocomplete="off"
+             placeholder="1990/06/24">
+      <div class="hint" style="margin-top:4px">数字だけでもOK（19900624 でも読み取ります）</div></div>
     <div id="q-result"></div>
+
+    <div id="q-save" style="display:none;border-top:2px dashed var(--line);
+         margin-top:16px;padding-top:14px">
+      <h3 style="margin-bottom:8px">📝 この人をめいぼに登録する</h3>
+      <div class="row">
+        <div class="field"><label>お名前</label>
+          <input id="q-name" type="text" placeholder="例：のりぴ"></div>
+        <div class="field"><label>グループ</label>
+          <select id="q-group"></select></div>
+      </div>
+      <div class="field"><label>メモ</label>
+        <input id="q-memo" type="text" placeholder="例：2期生"></div>
+      <button class="btn gold" id="btn-q-add">この人をめいぼに登録する</button>
+    </div>
   </div>
 
   <div class="card">
@@ -489,7 +548,7 @@ table.sheet tr:nth-child(even) td{background:#fcfaf4}
 
 <div id="toast"></div>
 </div><!-- /#app-content -->
-<script type="module" src="firebase-bebe.js"></script>
-<script src="app.js"></script>
+<script type="module" src="firebase-bebe.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
